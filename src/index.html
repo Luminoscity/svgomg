@@ -143,6 +143,11 @@
                 <span class="label-text">Transform precision</span>
                 <input type="range" min="0" max="8" step="1" value="2" name="transformPrecision">
               </label>
+              <label class="setting-item-toggle">
+                <input type="checkbox" name="remUnusedTextCode" checked>
+                {% include "partials/material-switch.html" %}
+                Remove unused text code
+              </label>
             </section>
             <section class="plugins">
               <h1 class="settings-sub-heading">Features</h1>
