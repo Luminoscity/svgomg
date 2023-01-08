@@ -1,2 +1,151 @@
-!function(){"use strict";const e=(()=>{let e;async function t(t,s){const a=await(e||(e=new Promise(((e,t)=>{const s=indexedDB.open("svgo-keyval",1);s.onerror=()=>{t(s.error)},s.onupgradeneeded=()=>{s.result.createObjectStore("keyval")},s.onsuccess=()=>{e(s.result)}})),e));return new Promise(((e,n)=>{const r=a.transaction("keyval",t);r.oncomplete=()=>e(),r.onerror=()=>n(r.error),s(r.objectStore("keyval"))}))}return{async get(e){let s;return await t("readonly",(t=>{s=t.get(e)})),s.result},set:(e,s)=>t("readwrite",(t=>{t.put(s,e)})),delete:e=>t("readwrite",(t=>{t.delete(e)}))}})(),t="1.16.0",s="svgomg-static-1.16.0",a="svgomg-fonts",n=new Set([s,a]);addEventListener("install",(a=>{a.waitUntil((async()=>{const a=e.get("active-version"),n=await caches.open(s);await n.addAll(["./","all.css","changelog.json","fonts/code-latin.woff2","imgs/icon.png","js/gzip-worker.js","js/page.js","js/prism-worker.js","js/svgo-worker.js","test-svgs/car-lite.svg"]);const r=await a;r&&r.split(".")[0]!==t.split(".")[0]||self.skipWaiting()})())})),addEventListener("activate",(s=>{s.waitUntil((async()=>{for(const e of await caches.keys())e.startsWith("svgomg-")&&(n.has(e)||await caches.delete(e));await e.set("active-version",t)})())})),addEventListener("fetch",(e=>{new URL(e.request.url).pathname.endsWith(".woff2")?e.respondWith(async function(e){const t=await caches.match(e);if(t)return t;const[s,n]=await Promise.all([fetch(e),caches.open(a)]);return n.put(e,s.clone()),s}(e.request)):e.respondWith(caches.match(e.request).then((t=>t||fetch(e.request))))}))}();
+(function () {
+  'use strict';
+
+  const idbKeyval = (() => {
+    let dbInstance;
+
+    function getDB() {
+      if (dbInstance) return dbInstance;
+
+      dbInstance = new Promise((resolve, reject) => {
+        const openreq = indexedDB.open('svgo-keyval', 1);
+
+        openreq.onerror = () => {
+          reject(openreq.error);
+        };
+
+        openreq.onupgradeneeded = () => {
+          // First time setup: create an empty object store
+          openreq.result.createObjectStore('keyval');
+        };
+
+        openreq.onsuccess = () => {
+          resolve(openreq.result);
+        };
+      });
+
+      return dbInstance;
+    }
+
+    async function withStore(type, callback) {
+      const db = await getDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction('keyval', type);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+        callback(transaction.objectStore('keyval'));
+      });
+    }
+
+    return {
+      async get(key) {
+        let request;
+        await withStore('readonly', (store) => {
+          request = store.get(key);
+        });
+        return request.result;
+      },
+      set(key, value) {
+        return withStore('readwrite', (store) => {
+          store.put(value, key);
+        });
+      },
+      delete(key) {
+        return withStore('readwrite', (store) => {
+          store.delete(key);
+        });
+      },
+    };
+  })();
+
+  /* globals "1.16.0":false */
+
+  const version = "1.16.0";
+  const cachePrefix = 'svgomg-';
+  const staticCacheName = `${cachePrefix}static-${version}`;
+  const fontCacheName = `${cachePrefix}fonts`;
+  const expectedCaches = new Set([staticCacheName, fontCacheName]);
+
+  addEventListener('install', (event) => {
+    event.waitUntil(
+      (async () => {
+        const activeVersionPromise = idbKeyval.get('active-version');
+        const cache = await caches.open(staticCacheName);
+
+        await cache.addAll([
+          './',
+          'all.css',
+          'changelog.json',
+          'fonts/code-latin.woff2',
+          'imgs/icon.png',
+          'js/gzip-worker.js',
+          'js/page.js',
+          'js/prism-worker.js',
+          'js/svgo-worker.js',
+          'test-svgs/car-lite.svg',
+        ]);
+
+        const activeVersion = await activeVersionPromise;
+
+        // If it's a major version change, don't skip waiting
+        if (
+          !activeVersion ||
+          activeVersion.split('.')[0] === version.split('.')[0]
+        ) {
+          self.skipWaiting();
+        }
+      })(),
+    );
+  });
+
+  addEventListener('activate', (event) => {
+    event.waitUntil(
+      (async () => {
+        // remove caches beginning "svgomg-" that aren't in expectedCaches
+        const cacheNames = await caches.keys();
+
+        await Promise.all(
+          cacheNames
+            .filter(
+              (cacheName) =>
+                cacheName.startsWith(cachePrefix) &&
+                !expectedCaches.has(cacheName),
+            )
+            .map((cacheName) => caches.delete(cacheName)),
+        );
+
+        await idbKeyval.set('active-version', version);
+      })(),
+    );
+  });
+
+  async function handleFontRequest(request) {
+    const match = await caches.match(request);
+    if (match) return match;
+
+    const [response, fontCache] = await Promise.all([
+      fetch(request),
+      caches.open(fontCacheName),
+    ]);
+
+    fontCache.put(request, response.clone());
+    return response;
+  }
+
+  addEventListener('fetch', (event) => {
+    const url = new URL(event.request.url);
+
+    if (url.pathname.endsWith('.woff2')) {
+      event.respondWith(handleFontRequest(event.request));
+      return;
+    }
+
+    event.respondWith(
+      caches
+        .match(event.request)
+        .then((response) => response || fetch(event.request)),
+    );
+  });
+
+})();
 //# sourceMappingURL=sw.js.map
