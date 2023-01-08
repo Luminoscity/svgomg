@@ -1,6 +1,5 @@
 export function removeUnusedTextCode(svgText) {
-  if (document.readyState == 'loading') return svgText;
-  console.log('removeUnusedTextCode');
+  if (document.readyState === 'loading') return svgText;
 
   const fontAttributes = [
     'font-style',
@@ -15,20 +14,18 @@ export function removeUnusedTextCode(svgText) {
     'word-spacing',
     'writing-mode',
     'text-anchor',
-    '-inkscape-font-specification'
+    '-inkscape-font-specification',
   ];
 
-  let svg = document.createElement('html');
+  const svg = document.createElement('html');
   svg.innerHTML = svgText;
-  let paths = svg.getElementsByTagName('path');
-  console.log(`paths: ${paths.length}`);
-  for (let path of paths) {
-    fontAttributes.forEach(a => {
+  const paths = svg.querySelectorAll('path');
+  for (const path of paths) {
+    for (const a of fontAttributes) {
       path.style.removeProperty(a);
       path.removeAttribute(a);
-    });
+    }
   }
 
-  let el = svg.getElementsByTagName('svg')[0].outerHTML;
-  return el;
+  return svg.querySelectorAll('svg')[0].outerHTML;
 }
