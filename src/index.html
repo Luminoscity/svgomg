@@ -149,6 +149,11 @@
                 {% include "partials/material-switch.html" %}
                 Remove unused text code
               </label>
+              <label class="setting-item-toggle">
+                <input type="checkbox" name="remUnusualAttributes">
+                {% include "partials/material-switch.html" %}
+                Remove unusual attributes
+              </label>
             </section>
             <section class="plugins">
               {% for plugin in plugins %}

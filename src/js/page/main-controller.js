@@ -17,6 +17,7 @@ import ViewToggler from './ui/view-toggler.js';
 import ResultsCache from './results-cache.js';
 import MainUi from './ui/main-ui.js';
 import { removeUnusedTextCode } from './text-code-clean.js';
+import { removeUnusualAttributes } from './unusual-code-clean.js';
 
 const svgo = new Svgo();
 
@@ -294,10 +295,16 @@ export default class MainController {
     try {
       let svgText = this._inputItem.text;
       if (settings.remUnusedTextCode) svgText = removeUnusedTextCode(svgText);
+      if (settings.remUnusualAttributes)
+        svgText = removeUnusualAttributes(svgText);
       const resultFile0 = await svgo.process(svgText, settings);
       let resultFile;
-      if (settings.remUnusedTextCode) {
-        svgText = removeUnusedTextCode(resultFile0.text);
+      if (settings.remUnusedTextCode || settings.remUnusualAttributes) {
+        svgText = settings.remUnusedTextCode
+          ? removeUnusedTextCode(resultFile0.text)
+          : resultFile0.text;
+        if (settings.remUnusualAttributes)
+          svgText = removeUnusualAttributes(svgText);
         resultFile = await svgo.process(svgText, settings);
       } else resultFile = resultFile0;
 
