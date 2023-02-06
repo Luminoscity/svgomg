@@ -1491,23 +1491,73 @@
       'font-weight',
       'font-stretch',
       'font-size',
-      'line-height',
       'font-family',
-      'text-align',
+      'line-height',
       'letter-spacing',
       'word-spacing',
       'writing-mode',
+      'white-space',
+      'text-align',
       'text-anchor',
+      'text-indent',
+      'text-transform',
+      'text-orientation',
+      'text-decoration-style',
+      'text-decoration-line',
+      'text-decoration-color',
+      'font-variant',
+      'font-variant-east-asian',
+      'font-variant-ligatures',
+      'font-variant-caps',
+      'font-variant-numeric',
+      'font-feature-settings',
+      'font-variant-position',
+      'font-variant-alternates',
+      'font-variation-settings',
+      '-inkscape-stroke',
       '-inkscape-font-specification',
     ];
 
     const svg = document.createElement('html');
     svg.innerHTML = svgText;
     const paths = svg.querySelectorAll('path');
-    for (const path of paths) {
-      for (const a of fontAttributes) {
+    const gs = svg.querySelectorAll('g');
+    for (const a of fontAttributes) {
+      for (const path of paths) {
         path.style.removeProperty(a);
         path.removeAttribute(a);
+      }
+      for (const group of gs) {
+        group.style.removeProperty(a);
+        group.removeAttribute(a);
+      }
+    }
+
+    return svg.querySelectorAll('svg')[0].outerHTML;
+  }
+
+  function removeUnusualAttributes(svgText) {
+    if (document.readyState === 'loading') return svgText;
+
+    const unusualAttributes = [
+      'shape-margin',
+      'inline-size',
+      'isolation',
+      'mix-blend-mode',
+    ];
+
+    const svg = document.createElement('html');
+    svg.innerHTML = svgText;
+    const paths = svg.querySelectorAll('path');
+    const gs = svg.querySelectorAll('g');
+    for (const a of unusualAttributes) {
+      for (const path of paths) {
+        path.style.removeProperty(a);
+        path.removeAttribute(a);
+      }
+      for (const group of gs) {
+        group.style.removeProperty(a);
+        group.removeAttribute(a);
       }
     }
 
@@ -1779,10 +1829,12 @@
       try {
         let svgText = this._inputItem.text;
         if (settings.remUnusedTextCode) svgText = removeUnusedTextCode(svgText);
+        if (settings.remUnusualAttributes) svgText = removeUnusualAttributes(svgText);
         const resultFile0 = await svgo.process(svgText, settings);
         let resultFile;
-        if (settings.remUnusedTextCode) {
-          svgText = removeUnusedTextCode(resultFile0.text);
+        if (settings.remUnusedTextCode || settings.remUnusualAttributes) {
+          svgText = settings.remUnusedTextCode ? removeUnusedTextCode(resultFile0.text) : resultFile0.text;
+          if (settings.remUnusualAttributes) svgText = removeUnusualAttributes(svgText);
           resultFile = await svgo.process(svgText, settings);
         } else resultFile = resultFile0;
 
