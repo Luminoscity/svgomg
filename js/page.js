@@ -1527,6 +1527,7 @@
         path.style.removeProperty(a);
         path.removeAttribute(a);
       }
+
       for (const group of gs) {
         group.style.removeProperty(a);
         group.removeAttribute(a);
@@ -1555,6 +1556,7 @@
         path.style.removeProperty(a);
         path.removeAttribute(a);
       }
+
       for (const group of gs) {
         group.style.removeProperty(a);
         group.removeAttribute(a);
@@ -1829,12 +1831,16 @@
       try {
         let svgText = this._inputItem.text;
         if (settings.remUnusedTextCode) svgText = removeUnusedTextCode(svgText);
-        if (settings.remUnusualAttributes) svgText = removeUnusualAttributes(svgText);
+        if (settings.remUnusualAttributes)
+          svgText = removeUnusualAttributes(svgText);
         const resultFile0 = await svgo.process(svgText, settings);
         let resultFile;
         if (settings.remUnusedTextCode || settings.remUnusualAttributes) {
-          svgText = settings.remUnusedTextCode ? removeUnusedTextCode(resultFile0.text) : resultFile0.text;
-          if (settings.remUnusualAttributes) svgText = removeUnusualAttributes(svgText);
+          svgText = settings.remUnusedTextCode
+            ? removeUnusedTextCode(resultFile0.text)
+            : resultFile0.text;
+          if (settings.remUnusualAttributes)
+            svgText = removeUnusualAttributes(svgText);
           resultFile = await svgo.process(svgText, settings);
         } else resultFile = resultFile0;
 
